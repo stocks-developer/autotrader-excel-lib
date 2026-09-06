@@ -1,6 +1,6 @@
 # AutoTrader Web Excel Tools: Bulk Multi-Account Order Placement for 40+ Indian Brokers
 
-> Place and copy **bulk orders from a spreadsheet** into one account or many at once, across **40+ Indian brokers**, straight from **Excel**. Includes ready-made bulk-order tools and a VBA Add-in that exposes the full trading API. Part of **[AutoTrader Web](https://stocksdeveloper.in/)** by **Stocks Developer**.
+> Place and copy **bulk orders from a spreadsheet** into one account or many at once, across **40+ Indian brokers**, straight from **Excel**. Includes ready-made bulk-order tools and VBA modules that expose the full trading API. Part of **[AutoTrader Web](https://stocksdeveloper.in/)** by **Stocks Developer**.
 
 [![Brokers supported](https://img.shields.io/badge/brokers-40%2B-2ea44f)](https://stocksdeveloper.in/#supported-brokers)
 [![Free trial](https://img.shields.io/badge/free%20trial-1%20month-blue)](https://webx.stocksdeveloper.in/register)
@@ -11,12 +11,12 @@
 
 ## What is this?
 
-The **AutoTrader Web Excel tools** let you place orders into one or many broker accounts straight from a spreadsheet. There are ready-made bulk-order tools for copying and placing orders across accounts, and an **Add-in** that exposes the full AutoTrader Web trading API for anyone who codes strategies in VBA (Excel macros).
+The **AutoTrader Web Excel tools** let you place orders into one or many broker accounts straight from a spreadsheet. There are ready-made bulk-order tools for copying and placing orders across accounts, and a set of **VBA modules** that expose the full AutoTrader Web trading API for anyone who codes strategies in Excel macros.
 
 - **Bulk orders from a spreadsheet.** Enter orders in a sheet and send them all at once.
 - **Multi-account and multi-broker.** Copy one order across many accounts (with per-account quantity), or place a different order per account, across different brokers.
 - **Scheduled placement.** Fire all your orders at a set time, for example at market open.
-- **VBA Add-in.** Call every API function from your own Excel macros.
+- **Full API in VBA.** Call every API function from your own Excel macros.
 - **Direct connection.** Your spreadsheet talks to AutoTrader Web over the internet. There is nothing else to install and nothing that has to keep running.
 
 ## What is AutoTrader Web?
@@ -53,17 +53,40 @@ AutoTrader Web works with **40+ Indian brokers**:
 
 Excel talks to AutoTrader Web directly.
 
+### Use a ready-made bulk-order tool
+
+These already contain everything they need. You only add your API key.
+
+1. Download a tool from the [`clients/excel/current/samples`](clients/excel/current/samples) folder.
+2. Open it and clear the Excel warnings (Enable Editing, Enable Content, and Unblock the file).
+3. Press **Alt+F11**, open the **AutoTraderConfig** module, and replace `<API_KEY>` with your API key. Save.
+4. Enter your orders and accounts in the sheets, then press the button to place them.
+
+Get your API key from your [account settings](https://webx.stocksdeveloper.in/). Treat it like a password: anyone who has it can place orders in your accounts, so do not share a workbook that still has your key in it.
+
+### Write your own workbook
+
 1. Sign in at [webx.stocksdeveloper.in](https://webx.stocksdeveloper.in/) and go to **Tools -> Library**.
 2. Download the Excel modules. Your API key is already inside the download, which is why it asks for your password.
-3. Download a ready-made bulk-order tool from the [`clients/excel/current/samples`](clients/excel/current/samples) folder.
-4. Open the tool, press **Alt+F11**, remove its old `AutoTraderClient` module, then **File -> Import File** and import all three `.bas` files from your download.
-5. Clear the Excel macro warnings (Enable Editing, Enable Content, and Unblock the file), then enter your orders and accounts in the sheets and place them.
+3. Open your workbook, press **Alt+F11**, then **File -> Import File** and import all three `.bas` files.
+4. Save the workbook as a macro-enabled workbook (`.xlsm`).
 
 > The modules also live in [`direct/`](direct) in this repository, but the copy you download from your account is the one that already carries your API key.
 
 The included bulk-order tools let you copy many orders across many accounts, copy a single order across accounts with different quantities per account, place a different order per account across brokers, and schedule orders to go at a set time.
 
 Full step-by-step guide: **[Excel tools setup](https://stocksdeveloper.in/documentation/client-setup/excel-library/)** and [bulk orders from Excel](https://stocksdeveloper.in/documentation/excel/). Get your API key from your [account settings](https://webx.stocksdeveloper.in/register).
+
+## Repository layout
+
+| Path | What it is |
+|---|---|
+| [`direct/`](direct) | The three modules a user imports. **Everything in this folder is sent to users verbatim.** |
+| [`clients/excel/current/samples/`](clients/excel/current/samples) | The ready-made bulk-order workbooks. |
+| `clients/excel/current/samples/modules/` | The driver source inside each of those workbooks, one file per workbook. |
+| `clients/excel/current/addin/modules/` | Source of the retired add-in, kept for reference only. Nothing here is used or shipped. |
+
+> **Do not add files to [`direct/`](direct).** The download on **Tools -> Library** is built by taking that whole folder from this repository at the moment a user asks for it, so anything placed there arrives in their zip. The setup instructions tell them to import three `.bas` files, and a fourth one would collide with a module of the same name and stop the workbook compiling. Source that is not meant for users belongs beside the thing it builds, which is why the sample drivers sit under `samples/modules/`.
 
 ## Pricing and free trial
 
@@ -84,7 +107,7 @@ Full step-by-step guide: **[Excel tools setup](https://stocksdeveloper.in/docume
 | 📘 Documentation | https://stocksdeveloper.in/documentation/getting-started/ |
 | 🧩 API reference | https://stocksdeveloper.in/documentation/api/ |
 | ⚙️ Excel tools setup | https://stocksdeveloper.in/documentation/client-setup/excel-library/ |
-| 🖥️ Excel tools setup | https://stocksdeveloper.in/documentation/client-setup/excel-library/ |
+| 📗 Bulk orders from Excel | https://stocksdeveloper.in/documentation/excel/ |
 | 🆓 Start free (1-month trial) | https://webx.stocksdeveloper.in/register |
 | ✉️ Contact us | https://stocksdeveloper.in/contact/ |
 

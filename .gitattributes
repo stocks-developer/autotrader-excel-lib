@@ -24,6 +24,10 @@
 *.sh         text eol=lf
 *.properties text eol=lf
 *.gradle     text eol=lf
+# VBA modules. These are the shipped source: they are imported into a workbook
+# by hand, so a stray CRLF is a diff nobody can read and a file nobody notices.
+*.bas        text eol=lf
+*.cls        text eol=lf
 *.xml        text eol=lf
 *.json       text eol=lf
 *.yml        text eol=lf
