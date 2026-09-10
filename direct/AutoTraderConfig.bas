@@ -28,7 +28,7 @@ Public Const AT_API_KEY As String = "<API_KEY>"
 ' Where the requests go. Leave this alone unless support asks you to change it.
 ' *****************************************************************************
 
-Public Const AT_BASE_URL As String = "https://api.stocksdeveloper.in"
+Public Const AT_BASE_URL As String = "https://apix.stocksdeveloper.in"
 
 ' *****************************************************************************
 ' How long the module re-uses portfolio data before asking the server again,

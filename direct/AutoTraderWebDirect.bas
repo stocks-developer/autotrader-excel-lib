@@ -1248,31 +1248,31 @@ End Function
 ' Retrieve order's quantity.
 Public Function GetOrderQuantity(pseudoAccount As String, _
     orderId As String) As Long
-    GetOrderQuantity = CLng(ReadOrderColumn(pseudoAccount, orderId, 12))
+    GetOrderQuantity = AtToLong(ReadOrderColumn(pseudoAccount, orderId, 12))
 End Function
 
 ' Retrieve order's price.
 Public Function GetOrderPrice(pseudoAccount As String, _
     orderId As String) As Double
-    GetOrderPrice = CDbl(ReadOrderColumn(pseudoAccount, orderId, 13))
+    GetOrderPrice = AtToDouble(ReadOrderColumn(pseudoAccount, orderId, 13))
 End Function
 
 ' Retrieve order's trigger price.
 Public Function GetOrderTriggerPrice(pseudoAccount As String, _
     orderId As String) As Double
-    GetOrderTriggerPrice = CDbl(ReadOrderColumn(pseudoAccount, orderId, 14))
+    GetOrderTriggerPrice = AtToDouble(ReadOrderColumn(pseudoAccount, orderId, 14))
 End Function
 
 ' Retrieve order's filled quantity.
 Public Function GetOrderFilledQuantity(pseudoAccount As String, _
     orderId As String) As Long
-    GetOrderFilledQuantity = CLng(ReadOrderColumn(pseudoAccount, orderId, 15))
+    GetOrderFilledQuantity = AtToLong(ReadOrderColumn(pseudoAccount, orderId, 15))
 End Function
 
 ' Retrieve order's pending quantity.
 Public Function GetOrderPendingQuantity(pseudoAccount As String, _
     orderId As String) As Long
-    GetOrderPendingQuantity = CLng(ReadOrderColumn(pseudoAccount, orderId, 16))
+    GetOrderPendingQuantity = AtToLong(ReadOrderColumn(pseudoAccount, orderId, 16))
 End Function
 
 ' Retrieve order's (platform independent) status.
@@ -1297,7 +1297,7 @@ End Function
 ' Retrieve order's average price at which it got traded.
 Public Function GetOrderAveragePrice(pseudoAccount As String, _
     orderId As String) As Double
-    GetOrderAveragePrice = CDbl(ReadOrderColumn(pseudoAccount, orderId, 20))
+    GetOrderAveragePrice = AtToDouble(ReadOrderColumn(pseudoAccount, orderId, 20))
 End Function
 
 ' Retrieve order's parent order id. The id of parent bracket or cover order.
@@ -1309,7 +1309,7 @@ End Function
 ' Retrieve order's disclosed quantity.
 Public Function GetOrderDisclosedQuantity(pseudoAccount As String, _
     orderId As String) As Long
-    GetOrderDisclosedQuantity = CLng(ReadOrderColumn(pseudoAccount, orderId, 22))
+    GetOrderDisclosedQuantity = AtToLong(ReadOrderColumn(pseudoAccount, orderId, 22))
 End Function
 
 ' Retrieve order's exchange time as a string (YYYY-MM-DD HH:MM:SS.MILLIS).
@@ -1452,7 +1452,7 @@ End Function
 Public Function GetPositionMtm(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Double
-    GetPositionMtm = CDbl(ReadPositionColumn(pseudoAccount, _
+    GetPositionMtm = AtToDouble(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 7))
 End Function
 
@@ -1460,7 +1460,7 @@ End Function
 Public Function GetPositionPnl(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Double
-    GetPositionPnl = CDbl(ReadPositionColumn(pseudoAccount, _
+    GetPositionPnl = AtToDouble(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 8))
 End Function
 
@@ -1468,7 +1468,7 @@ End Function
 Public Function GetPositionAtPnl(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Double
-    GetPositionAtPnl = CDbl(ReadPositionColumn(pseudoAccount, _
+    GetPositionAtPnl = AtToDouble(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 31))
 End Function
 
@@ -1476,7 +1476,7 @@ End Function
 Public Function GetPositionBuyQuantity(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Long
-    GetPositionBuyQuantity = CLng(ReadPositionColumn(pseudoAccount, _
+    GetPositionBuyQuantity = AtToLong(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 9))
 End Function
 
@@ -1484,7 +1484,7 @@ End Function
 Public Function GetPositionSellQuantity(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Long
-    GetPositionSellQuantity = CLng(ReadPositionColumn(pseudoAccount, _
+    GetPositionSellQuantity = AtToLong(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 10))
 End Function
 
@@ -1492,7 +1492,7 @@ End Function
 Public Function GetPositionNetQuantity(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Long
-    GetPositionNetQuantity = CLng(ReadPositionColumn(pseudoAccount, _
+    GetPositionNetQuantity = AtToLong(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 11))
 End Function
 
@@ -1500,7 +1500,7 @@ End Function
 Public Function GetPositionBuyValue(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Double
-    GetPositionBuyValue = CDbl(ReadPositionColumn(pseudoAccount, _
+    GetPositionBuyValue = AtToDouble(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 12))
 End Function
 
@@ -1508,7 +1508,7 @@ End Function
 Public Function GetPositionSellValue(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Double
-    GetPositionSellValue = CDbl(ReadPositionColumn(pseudoAccount, _
+    GetPositionSellValue = AtToDouble(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 13))
 End Function
 
@@ -1516,7 +1516,7 @@ End Function
 Public Function GetPositionNetValue(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Double
-    GetPositionNetValue = CDbl(ReadPositionColumn(pseudoAccount, _
+    GetPositionNetValue = AtToDouble(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 14))
 End Function
 
@@ -1524,7 +1524,7 @@ End Function
 Public Function GetPositionBuyAvgPrice(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Double
-    GetPositionBuyAvgPrice = CDbl(ReadPositionColumn(pseudoAccount, _
+    GetPositionBuyAvgPrice = AtToDouble(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 15))
 End Function
 
@@ -1532,7 +1532,7 @@ End Function
 Public Function GetPositionSellAvgPrice(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Double
-    GetPositionSellAvgPrice = CDbl(ReadPositionColumn(pseudoAccount, _
+    GetPositionSellAvgPrice = AtToDouble(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 16))
 End Function
 
@@ -1540,7 +1540,7 @@ End Function
 Public Function GetPositionRealisedPnl(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Double
-    GetPositionRealisedPnl = CDbl(ReadPositionColumn(pseudoAccount, _
+    GetPositionRealisedPnl = AtToDouble(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 17))
 End Function
 
@@ -1548,7 +1548,7 @@ End Function
 Public Function GetPositionUnrealisedPnl(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Double
-    GetPositionUnrealisedPnl = CDbl(ReadPositionColumn(pseudoAccount, _
+    GetPositionUnrealisedPnl = AtToDouble(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 18))
 End Function
 
@@ -1556,7 +1556,7 @@ End Function
 Public Function GetPositionOvernightQuantity(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Long
-    GetPositionOvernightQuantity = CLng(ReadPositionColumn(pseudoAccount, _
+    GetPositionOvernightQuantity = AtToLong(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 19))
 End Function
 
@@ -1564,7 +1564,7 @@ End Function
 Public Function GetPositionMultiplier(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Long
-    GetPositionMultiplier = CLng(ReadPositionColumn(pseudoAccount, _
+    GetPositionMultiplier = AtToLong(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 20))
 End Function
 
@@ -1572,7 +1572,7 @@ End Function
 Public Function GetPositionLtp(pseudoAccount As String, _
     category As String, posType As String, independentExchange As String, _
     independentSymbol As String) As Double
-    GetPositionLtp = CDbl(ReadPositionColumn(pseudoAccount, _
+    GetPositionLtp = AtToDouble(ReadPositionColumn(pseudoAccount, _
         category, posType, independentExchange, independentSymbol, 21))
 End Function
 
@@ -1637,64 +1637,64 @@ End Function
 ' Retrieve margin funds.
 Public Function GetMarginFunds(pseudoAccount As String, _
     category As String) As Double
-    GetMarginFunds = CDbl(ReadMarginColumn(pseudoAccount, category, 4))
+    GetMarginFunds = AtToDouble(ReadMarginColumn(pseudoAccount, category, 4))
 End Function
 
 ' Retrieve margin utilized.
 Public Function GetMarginUtilized(pseudoAccount As String, _
     category As String) As Double
-    GetMarginUtilized = CDbl(ReadMarginColumn(pseudoAccount, category, 5))
+    GetMarginUtilized = AtToDouble(ReadMarginColumn(pseudoAccount, category, 5))
 End Function
 
 ' Retrieve margin available.
 Public Function GetMarginAvailable(pseudoAccount As String, _
     category As String) As Double
-    GetMarginAvailable = CDbl(ReadMarginColumn(pseudoAccount, category, 6))
+    GetMarginAvailable = AtToDouble(ReadMarginColumn(pseudoAccount, category, 6))
 End Function
 
 ' Retrieve margin funds for equity category.
 Public Function GetMarginFundsEquity(pseudoAccount As String) As Double
-    GetMarginFundsEquity = CDbl(ReadMarginColumn(pseudoAccount, MARGIN_EQUITY, 4))
+    GetMarginFundsEquity = AtToDouble(ReadMarginColumn(pseudoAccount, MARGIN_EQUITY, 4))
 End Function
 
 ' Retrieve margin utilized for equity category.
 Public Function GetMarginUtilizedEquity(pseudoAccount As String) As Double
-    GetMarginUtilizedEquity = CDbl(ReadMarginColumn(pseudoAccount, MARGIN_EQUITY, 5))
+    GetMarginUtilizedEquity = AtToDouble(ReadMarginColumn(pseudoAccount, MARGIN_EQUITY, 5))
 End Function
 
 ' Retrieve margin available for equity category.
 Public Function GetMarginAvailableEquity(pseudoAccount As String) As Double
-    GetMarginAvailableEquity = CDbl(ReadMarginColumn(pseudoAccount, MARGIN_EQUITY, 6))
+    GetMarginAvailableEquity = AtToDouble(ReadMarginColumn(pseudoAccount, MARGIN_EQUITY, 6))
 End Function
 
 ' Retrieve margin funds for commodity category.
 Public Function GetMarginFundsCommodity(pseudoAccount As String) As Double
-    GetMarginFundsCommodity = CDbl(ReadMarginColumn(pseudoAccount, MARGIN_COMMODITY, 4))
+    GetMarginFundsCommodity = AtToDouble(ReadMarginColumn(pseudoAccount, MARGIN_COMMODITY, 4))
 End Function
 
 ' Retrieve margin utilized for commodity category.
 Public Function GetMarginUtilizedCommodity(pseudoAccount As String) As Double
-    GetMarginUtilizedCommodity = CDbl(ReadMarginColumn(pseudoAccount, MARGIN_COMMODITY, 5))
+    GetMarginUtilizedCommodity = AtToDouble(ReadMarginColumn(pseudoAccount, MARGIN_COMMODITY, 5))
 End Function
 
 ' Retrieve margin available for commodity category.
 Public Function GetMarginAvailableCommodity(pseudoAccount As String) As Double
-    GetMarginAvailableCommodity = CDbl(ReadMarginColumn(pseudoAccount, MARGIN_COMMODITY, 6))
+    GetMarginAvailableCommodity = AtToDouble(ReadMarginColumn(pseudoAccount, MARGIN_COMMODITY, 6))
 End Function
 
 ' Retrieve margin funds for entire account.
 Public Function GetMarginFundsAll(pseudoAccount As String) As Double
-    GetMarginFundsAll = CDbl(ReadMarginColumn(pseudoAccount, MARGIN_ALL, 4))
+    GetMarginFundsAll = AtToDouble(ReadMarginColumn(pseudoAccount, MARGIN_ALL, 4))
 End Function
 
 ' Retrieve margin utilized for entire account.
 Public Function GetMarginUtilizedAll(pseudoAccount As String) As Double
-    GetMarginUtilizedAll = CDbl(ReadMarginColumn(pseudoAccount, MARGIN_ALL, 5))
+    GetMarginUtilizedAll = AtToDouble(ReadMarginColumn(pseudoAccount, MARGIN_ALL, 5))
 End Function
 
 ' Retrieve margin available for entire account.
 Public Function GetMarginAvailableAll(pseudoAccount As String) As Double
-    GetMarginAvailableAll = CDbl(ReadMarginColumn(pseudoAccount, MARGIN_ALL, 6))
+    GetMarginAvailableAll = AtToDouble(ReadMarginColumn(pseudoAccount, MARGIN_ALL, 6))
 End Function
 
 ' *****************************************************************************
