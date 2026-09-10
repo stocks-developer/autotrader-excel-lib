@@ -72,6 +72,16 @@ Public Const AT_HTTP_TIMEOUT_READ As Long = 10000
 Public Const AT_HTTP_TIMEOUT_COMMAND As Long = 30000
 
 ' *****************************************************************************
+' How far to read along the header when resolving a column name.
+'
+' The widest dataset the server sends is orders, at 33 columns, so this is
+' generous. It is only a stop so that a malformed header cannot spin a sheet:
+' the scan ends at the first empty column anyway.
+' *****************************************************************************
+
+Public Const AT_HTTP_MAX_COLUMNS As Integer = 60
+
+' *****************************************************************************
 ' Print every request and reply to the VBA Immediate window (Ctrl+G).
 '
 ' Useful when setting up, noisy afterwards. It does NOT print your API key.

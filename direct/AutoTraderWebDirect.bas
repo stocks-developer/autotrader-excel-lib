@@ -244,13 +244,32 @@ End Function
 Public Function AtPipeField(Line As String, index As Integer) As String
 
     Dim parts() As String
+    Dim value As String
+
     parts = Split(Line, "|")
 
     If index >= 1 And index <= (UBound(parts) - LBound(parts) + 1) Then
-        AtPipeField = parts(LBound(parts) + index - 1)
+        value = parts(LBound(parts) + index - 1)
     Else
         AtPipeField = ""
+        Exit Function
     End If
+
+    ' The last field is trimmed because it carries whatever line ending the
+    ' reader left on the reply, and that field is the broker's order id.
+    '
+    ' An untrimmed id is still returned by PlaceOrder and still looks right in a
+    ' cell, but every GetOrderStatus/GetOrderPrice call made with it silently
+    ' returns blank, because no row matches an id with a line ending stuck to
+    ' it.
+    '
+    ' MSXML hands back the whole body rather than lines, so this is a guard
+    ' rather than a fix for an observed fault. VBA's own Trim removes spaces
+    ' only, so the line endings have to go first.
+    value = Replace(value, vbCr, "")
+    value = Replace(value, vbLf, "")
+
+    AtPipeField = Trim$(value)
 
 End Function
 
@@ -476,15 +495,25 @@ Private Sub AtFetchDataset(pseudoAccount As String, dataset As String)
     AtRecordStatus Status, Response, False
 
     If Status = AT_HTTP_CSV Then
-        ' Drop the header row so row 1 is the first real record and the column
-        ' numbers match the add-in exactly.
+        ' Separate the header row from the records, so row 1 is the first real
+        ' record and the column numbers match the add-in exactly.
+        '
+        ' The header itself is KEPT rather than thrown away. It names every
+        ' column, which is what lets a lookup ask for "QUANTITY" instead of
+        ' counting to seven. Discarding it is what let ReadHoldingColumn match
+        ' the broker symbol column while every caller passed an independent
+        ' symbol -- a silent wrong answer that reading the code would not show.
         body = Replace(Response, vbCr, "")
         cut = InStr(1, body, vbLf)
 
         If cut = 0 Then
             rows = Split("", vbLf)
+            ' Header only: still worth keeping, so a name can be resolved
+            ' against an empty dataset without another request.
+            AtCache(dataset & "|" & pseudoAccount & "|H") = body
             AtCache(dataset & "|" & pseudoAccount & "|N") = 0
         Else
+            AtCache(dataset & "|" & pseudoAccount & "|H") = Left$(body, cut - 1)
             body = Mid$(body, cut + 1)
             Do While Len(body) > 0 And Right$(body, 1) = vbLf
                 body = Left$(body, Len(body) - 1)
@@ -623,6 +652,223 @@ End Function
 Public Function AtRowCount(pseudoAccount As String, dataset As String) As Long
     AtEnsureFresh pseudoAccount, dataset
     AtRowCount = AtRowCountInternal(pseudoAccount, dataset)
+End Function
+
+' Reads a column from a row by its position, 1 for the first record.
+Public Function AtReadRowColumn(pseudoAccount As String, dataset As String, _
+    row As Long, column As Integer) As String
+
+    Dim rows As Variant
+
+    AtEnsureFresh pseudoAccount, dataset
+    AtReadRowColumn = ""
+
+    If row < 1 Or row > AtRowCountInternal(pseudoAccount, dataset) Then Exit Function
+
+    rows = AtCache(dataset & "|" & pseudoAccount & "|R")
+    AtReadRowColumn = AtCsvField(CStr(rows(LBound(rows) + row - 1)), column)
+
+End Function
+
+' ---------------------------------------------------------------------------
+' Lookup by name
+' ---------------------------------------------------------------------------
+
+' Position of a named column in a dataset, 1 based. 0 when there is no such
+' column.
+'
+' This is the whole point of keeping the header. Every lookup that identifies a
+' row goes through a NAME, so a change to the server's column order cannot
+' quietly make a getter return the wrong field -- the worst it can do is return
+' 0 here, which is visible.
+'
+' The answer is cached per account and dataset, because a sheet may ask for
+' twenty fields on a recalculation and re-scanning the header each time would be
+' twenty scans for an answer that never changes within a session.
+'
+' Names are compared without regard to case, so "quantity" and "QUANTITY" are
+' the same column.
+Public Function AtColumnOf(pseudoAccount As String, dataset As String, _
+    fieldName As String) As Integer
+
+    Dim cacheKey As String
+    Dim header As String
+    Dim wanted As String
+    Dim colName As String
+    Dim i As Integer
+    Dim found As Integer
+
+    AtEnsureFresh pseudoAccount, dataset
+
+    wanted = UCase$(Trim$(fieldName))
+    cacheKey = dataset & "|" & pseudoAccount & "|C" & wanted
+
+    If AtCache.Exists(cacheKey) Then
+        ' -1 records "looked and it is not there", so a missing column is not
+        ' re-scanned on every call.
+        If AtCache(cacheKey) < 0 Then
+            AtColumnOf = 0
+        Else
+            AtColumnOf = AtCache(cacheKey)
+        End If
+        Exit Function
+    End If
+
+    header = ""
+    If AtCache.Exists(dataset & "|" & pseudoAccount & "|H") Then
+        header = CStr(AtCache(dataset & "|" & pseudoAccount & "|H"))
+    End If
+
+    found = 0
+
+    For i = 1 To AT_HTTP_MAX_COLUMNS
+        colName = UCase$(Trim$(AtCsvField(header, i)))
+
+        If Len(colName) = 0 Then
+            ' Past the end of the header.
+            Exit For
+        End If
+
+        If colName = wanted Then
+            found = i
+            Exit For
+        End If
+    Next i
+
+    ' A miss is only worth remembering when there WAS a header to miss in. An
+    ' account with no orders yet gets an empty reply, and an empty reply carries
+    ' no header at all -- the server has no rows to write one from. Remembering
+    ' "not there" at that moment would keep the column unresolvable for the rest
+    ' of the session, so the first order placed afterwards could never be read
+    ' back.
+    If found = 0 And Len(header) = 0 Then
+        AtColumnOf = 0
+        Exit Function
+    End If
+
+    If found = 0 Then
+        AtCache(cacheKey) = -1
+    Else
+        AtCache(cacheKey) = found
+    End If
+
+    AtColumnOf = found
+
+End Function
+
+' One field of one row, addressed by column NAME. Blank when the dataset has no
+' such column or the row is out of range.
+Public Function AtFieldByName(pseudoAccount As String, dataset As String, _
+    row As Long, fieldName As String) As String
+
+    Dim column As Integer
+    column = AtColumnOf(pseudoAccount, dataset, fieldName)
+
+    If column < 1 Then
+        AtFieldByName = ""
+    Else
+        AtFieldByName = AtReadRowColumn(pseudoAccount, dataset, row, column)
+    End If
+
+End Function
+
+' The first row whose named column equals a value, as a row number. 0 when
+' nothing matches.
+Public Function AtFindRowByName(pseudoAccount As String, dataset As String, _
+    fieldName As String, value As String) As Long
+
+    Dim rows As Variant
+    Dim column As Integer
+    Dim i As Long
+
+    AtFindRowByName = 0
+
+    column = AtColumnOf(pseudoAccount, dataset, fieldName)
+    If column < 1 Then Exit Function
+    If AtRowCountInternal(pseudoAccount, dataset) = 0 Then Exit Function
+
+    rows = AtCache(dataset & "|" & pseudoAccount & "|R")
+
+    For i = LBound(rows) To UBound(rows)
+        If AtCsvField(CStr(rows(i)), column) = value Then
+            AtFindRowByName = i - LBound(rows) + 1
+            Exit Function
+        End If
+    Next i
+
+End Function
+
+' The first row matching TWO named columns at once. 0 when nothing matches.
+Public Function AtFindRowByName2(pseudoAccount As String, dataset As String, _
+    field1 As String, value1 As String, _
+    field2 As String, value2 As String) As Long
+
+    Dim rows As Variant
+    Dim col1 As Integer, col2 As Integer
+    Dim i As Long
+    Dim Line As String
+
+    AtFindRowByName2 = 0
+
+    col1 = AtColumnOf(pseudoAccount, dataset, field1)
+    col2 = AtColumnOf(pseudoAccount, dataset, field2)
+    If col1 < 1 Or col2 < 1 Then Exit Function
+    If AtRowCountInternal(pseudoAccount, dataset) = 0 Then Exit Function
+
+    rows = AtCache(dataset & "|" & pseudoAccount & "|R")
+
+    For i = LBound(rows) To UBound(rows)
+        Line = CStr(rows(i))
+
+        If AtCsvField(Line, col1) = value1 And _
+           AtCsvField(Line, col2) = value2 Then
+
+            AtFindRowByName2 = i - LBound(rows) + 1
+            Exit Function
+        End If
+    Next i
+
+End Function
+
+' The first row matching FOUR named columns at once.
+'
+' A position has no id of its own -- it is identified by category, type,
+' exchange and symbol together.
+Public Function AtFindRowByName4(pseudoAccount As String, dataset As String, _
+    field1 As String, value1 As String, _
+    field2 As String, value2 As String, _
+    field3 As String, value3 As String, _
+    field4 As String, value4 As String) As Long
+
+    Dim rows As Variant
+    Dim col1 As Integer, col2 As Integer, col3 As Integer, col4 As Integer
+    Dim i As Long
+    Dim Line As String
+
+    AtFindRowByName4 = 0
+
+    col1 = AtColumnOf(pseudoAccount, dataset, field1)
+    col2 = AtColumnOf(pseudoAccount, dataset, field2)
+    col3 = AtColumnOf(pseudoAccount, dataset, field3)
+    col4 = AtColumnOf(pseudoAccount, dataset, field4)
+    If col1 < 1 Or col2 < 1 Or col3 < 1 Or col4 < 1 Then Exit Function
+    If AtRowCountInternal(pseudoAccount, dataset) = 0 Then Exit Function
+
+    rows = AtCache(dataset & "|" & pseudoAccount & "|R")
+
+    For i = LBound(rows) To UBound(rows)
+        Line = CStr(rows(i))
+
+        If AtCsvField(Line, col1) = value1 And _
+           AtCsvField(Line, col2) = value2 And _
+           AtCsvField(Line, col3) = value3 And _
+           AtCsvField(Line, col4) = value4 Then
+
+            AtFindRowByName4 = i - LBound(rows) + 1
+            Exit Function
+        End If
+    Next i
+
 End Function
 
 ' ---------------------------------------------------------------------------
@@ -1457,12 +1703,36 @@ End Function
 
 ' Reads holdings and returns a column value for the given symbol.
 '
-' Matched on column 5, SYMBOL. Excel never had holdings functions at all; these
-' are new, and they use the same column table the AmiBroker library was checked
-' against.
+' Matched on the INDEPENDENT symbol, by name.
+'
+' This used to match column 5, taken from the same column table the AmiBroker
+' library was checked against -- which is how the fault travelled. In the file
+' the Desktop Client wrote, column 5 was the independent symbol. In the
+' server's holdings CSV column 5 is the BROKER symbol -- "IOC-EQ" where the
+' caller passes "IOC" -- so every holding getter matched nothing and returned 0
+' or blank for an account that did hold the stock. Nothing in the code showed
+' it, because 0 is also the honest answer for a stock you do not hold.
+'
+' Holdings are the one dataset with no single INDEPENDENTSYMBOL column; they
+' carry one per exchange. The getters take no exchange, so try NSE and then
+' BSE.
 Public Function ReadHoldingColumn(pseudoAccount As String, _
     Symbol As String, columnIndex As Integer) As String
-    ReadHoldingColumn = AtReadColumn(pseudoAccount, AT_DS_HOLDINGS, Symbol, 5, columnIndex)
+
+    Dim row As Long
+
+    row = AtFindRowByName(pseudoAccount, AT_DS_HOLDINGS, "INDEPENDENTSYMBOLNSE", Symbol)
+
+    If row = 0 Then
+        row = AtFindRowByName(pseudoAccount, AT_DS_HOLDINGS, "INDEPENDENTSYMBOLBSE", Symbol)
+    End If
+
+    If row = 0 Then
+        ReadHoldingColumn = ""
+    Else
+        ReadHoldingColumn = AtReadRowColumn(pseudoAccount, AT_DS_HOLDINGS, row, columnIndex)
+    End If
+
 End Function
 
 ' Retrieve holding exchange.
@@ -1547,4 +1817,177 @@ End Function
 Public Function GetHoldingCurrentValue(pseudoAccount As String, _
     Symbol As String) As Double
     GetHoldingCurrentValue = AtToDouble(ReadHoldingColumn(pseudoAccount, Symbol, 22))
+End Function
+
+' ***************************************************************************
+'
+' PORTFOLIO BY NAME -- the recommended way to read a portfolio.
+'
+' The Get...() functions above still work and are not going away. They come
+' from the add-in, so each one takes the whole identity of a row and looks that
+' row up again, and each one addresses its field by a column NUMBER. Twenty
+' fields means twenty lookups, and a column number is only correct until the
+' server's CSV changes shape.
+'
+' These read by NAME instead, and find the row once:
+'
+'     h = AtFindHolding(AT_ACCOUNT, "NSE", "IOC")
+'     If AtFound(h) Then
+'         qty = AtNum(h, "QUANTITY")
+'         isin = AtText(h, "ISIN")
+'     End If
+'
+' AtFound() matters. A holding you do not have and a lookup that is broken both
+' read as 0, and telling them apart is exactly what was missing when the
+' holdings fault above went unnoticed.
+'
+' Field names are the column names in the server's CSV header, case does not
+' matter: QUANTITY, PNL, ISIN, PRODUCT, LTP, AVGPRICE, STATUS, TRADETYPE,
+' NETQUANTITY, BUYAVGPRICE, and so on. An unknown name returns blank rather
+' than the wrong field.
+'
+' Every one of these is safe to call from a worksheet cell as well as from VBA.
+'
+' ***************************************************************************
+
+' A row handle: which account, which dataset, which row. Held as text so it can
+' sit in a cell like any other value.
+Public Function AtHandle(pseudoAccount As String, dataset As String, _
+    row As Long) As String
+    AtHandle = pseudoAccount & "|" & dataset & "|" & CStr(row)
+End Function
+
+' True when a find...() actually found something.
+Public Function AtFound(handle As String) As Boolean
+    AtFound = (Len(handle) > 0)
+End Function
+
+' One field of a found row, as text. Blank for an unknown field or a handle
+' that found nothing.
+Public Function AtText(handle As String, fieldName As String) As String
+
+    If Len(handle) = 0 Then
+        AtText = ""
+        Exit Function
+    End If
+
+    AtText = AtFieldByName(AtPipeField(handle, 1), AtPipeField(handle, 2), _
+        CLng(Val(AtPipeField(handle, 3))), fieldName)
+
+End Function
+
+' The same, as a number.
+Public Function AtNum(handle As String, fieldName As String) As Double
+    AtNum = AtToDouble(AtText(handle, fieldName))
+End Function
+
+' Finds one holding. Exchange decides which independent symbol column is
+' matched, so BSE holdings are addressable too.
+Public Function AtFindHolding(pseudoAccount As String, exchange As String, _
+    Symbol As String) As String
+
+    Dim field As String
+    Dim row As Long
+
+    field = "INDEPENDENTSYMBOLNSE"
+    If UCase$(Trim$(exchange)) = "BSE" Then field = "INDEPENDENTSYMBOLBSE"
+
+    row = AtFindRowByName(pseudoAccount, AT_DS_HOLDINGS, field, Symbol)
+
+    If row = 0 Then
+        AtFindHolding = ""
+    Else
+        AtFindHolding = AtHandle(pseudoAccount, AT_DS_HOLDINGS, row)
+    End If
+
+End Function
+
+' Finds one order by the broker's order id -- what PlaceOrder returns.
+Public Function AtFindOrder(pseudoAccount As String, orderId As String) As String
+
+    Dim row As Long
+    row = AtFindRowByName(pseudoAccount, AT_DS_ORDERS, "ID", orderId)
+
+    If row = 0 Then
+        AtFindOrder = ""
+    Else
+        AtFindOrder = AtHandle(pseudoAccount, AT_DS_ORDERS, row)
+    End If
+
+End Function
+
+' Finds one position. A position has no id of its own, so it is identified by
+' category, type, exchange and symbol together.
+Public Function AtFindPosition(pseudoAccount As String, category As String, _
+    posType As String, exchange As String, Symbol As String) As String
+
+    Dim row As Long
+
+    row = AtFindRowByName4(pseudoAccount, AT_DS_POSITIONS, _
+        "CATEGORY", category, "TYPE", posType, _
+        "INDEPENDENTEXCHANGE", exchange, "INDEPENDENTSYMBOL", Symbol)
+
+    If row = 0 Then
+        AtFindPosition = ""
+    Else
+        AtFindPosition = AtHandle(pseudoAccount, AT_DS_POSITIONS, row)
+    End If
+
+End Function
+
+' Finds one margin category: EQUITY, COMMODITY or ALL.
+Public Function AtFindMargin(pseudoAccount As String, category As String) As String
+
+    Dim row As Long
+    row = AtFindRowByName(pseudoAccount, AT_DS_MARGINS, "CATEGORY", category)
+
+    If row = 0 Then
+        AtFindMargin = ""
+    Else
+        AtFindMargin = AtHandle(pseudoAccount, AT_DS_MARGINS, row)
+    End If
+
+End Function
+
+' How many rows a portfolio holds, and the n-th of them, 1 based.
+'
+' There was no way to WALK a portfolio before: every getter needed a symbol you
+' already knew, so a sheet could not ask "what am I holding?" or "what is still
+' open?". These make that possible -- fill a column with
+' =AtText(AtHoldingAt($A$1, ROW()-1), "INDEPENDENTSYMBOLNSE") and the portfolio
+' lists itself.
+Public Function AtHoldingCount(pseudoAccount As String) As Long
+    AtHoldingCount = AtRowCount(pseudoAccount, AT_DS_HOLDINGS)
+End Function
+
+Public Function AtPositionCount(pseudoAccount As String) As Long
+    AtPositionCount = AtRowCount(pseudoAccount, AT_DS_POSITIONS)
+End Function
+
+Public Function AtOrderCount(pseudoAccount As String) As Long
+    AtOrderCount = AtRowCount(pseudoAccount, AT_DS_ORDERS)
+End Function
+
+Public Function AtHoldingAt(pseudoAccount As String, n As Long) As String
+    If n < 1 Or n > AtRowCount(pseudoAccount, AT_DS_HOLDINGS) Then
+        AtHoldingAt = ""
+    Else
+        AtHoldingAt = AtHandle(pseudoAccount, AT_DS_HOLDINGS, n)
+    End If
+End Function
+
+Public Function AtPositionAt(pseudoAccount As String, n As Long) As String
+    If n < 1 Or n > AtRowCount(pseudoAccount, AT_DS_POSITIONS) Then
+        AtPositionAt = ""
+    Else
+        AtPositionAt = AtHandle(pseudoAccount, AT_DS_POSITIONS, n)
+    End If
+End Function
+
+Public Function AtOrderAt(pseudoAccount As String, n As Long) As String
+    If n < 1 Or n > AtRowCount(pseudoAccount, AT_DS_ORDERS) Then
+        AtOrderAt = ""
+    Else
+        AtOrderAt = AtHandle(pseudoAccount, AT_DS_ORDERS, n)
+    End If
 End Function

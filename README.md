@@ -77,6 +77,49 @@ The included bulk-order tools let you copy many orders across many accounts, cop
 
 Full step-by-step guide: **[Excel tools setup](https://stocksdeveloper.in/documentation/client-setup/excel-library/)** and [bulk orders from Excel](https://stocksdeveloper.in/documentation/excel/). Get your API key from your [account settings](https://webx.stocksdeveloper.in/register).
 
+### Reading your portfolio
+
+Find the row once, then read its fields by name. This works in a cell and in VBA:
+
+```vb
+holdRow = AtFindHolding(AT_ACCOUNT, "NSE", "IOC")
+
+If AtFound(holdRow) Then
+    qty = AtNum(holdRow, "QUANTITY")
+    isin = AtText(holdRow, "ISIN")
+End If
+```
+
+There is a finder for each kind of row:
+
+| Finder | Identified by |
+|---|---|
+| `AtFindHolding(account, exchange, symbol)` | exchange and symbol |
+| `AtFindPosition(account, category, type, exchange, symbol)` | all four together |
+| `AtFindOrder(account, orderId)` | the broker's order id |
+| `AtFindMargin(account, category)` | `EQUITY`, `COMMODITY` or `ALL` |
+
+`AtFound()` tells you whether the row exists. This matters: a holding you do not have and a lookup that went wrong both read as `0`, and only `AtFound()` separates them.
+
+Field names are the column names your data already uses, and case does not matter — `QUANTITY`, `PNL`, `LTP`, `AVGPRICE`, `ISIN`, `STATUS`, `TRADETYPE`, `NETQUANTITY`, `BUYAVGPRICE` and so on. Ask for a name that does not exist and you get a blank, never a different field by mistake.
+
+You can also list a whole portfolio down a column, which the older functions cannot do. Put the account in `$A$1`, then fill down:
+
+```
+=AtText(AtHoldingAt($A$1, ROW()-1), "INDEPENDENTSYMBOLNSE")
+=AtNum(AtHoldingAt($A$1, ROW()-1), "QUANTITY")
+```
+
+`AtHoldingCount()`, `AtPositionCount()` and `AtOrderCount()` tell you how many rows there are, with `AtPositionAt()` and `AtOrderAt()` alongside `AtHoldingAt()`.
+
+The older `GetHoldingQuantity()`, `GetPositionNetQuantity()`, `GetOrderStatus()` style functions still work exactly as before and are not going away. Use these when you want to read several fields of the same row, or when you need to go through a portfolio without knowing the symbols in advance.
+
+### Reading an order back after you place or change it
+
+An order does not update the instant you place, modify or cancel it. Your broker's order book takes a few seconds to catch up, and the modules re-use portfolio data for a couple of seconds so that a recalculating sheet does not send the same request twenty times.
+
+So a read taken immediately after a change can show the previous state. That is not a failure — it means *not updated yet*. Give it a few seconds before deciding an order did not work, and never send it a second time on the strength of a blank read.
+
 ## Repository layout
 
 | Path | What it is |
