@@ -130,6 +130,9 @@ Private AtHttpResponse As String
 
 Private AtHttpStatusCode As Long
 
+' Whether a failed request raises a dialog. See AtSetQuiet.
+Private AtQuietMode As Boolean
+
 ' One entry per account and dataset: the rows, when they were fetched, and how
 ' that fetch went.
 Private AtCache As Object
@@ -156,14 +159,96 @@ Private Sub AtTrace(Message As String)
     End If
 End Sub
 
+' Whether to raise a dialog when a request fails.
+'
+' A dialog is right when a person clicked something and wrong when a tool is
+' working through fifty rows: fifty modal dialogs, each needing a click, is not
+' a report. A tool that keeps its own record turns this off around its loop and
+' reads AtLastMessage() instead, so every reason still reaches the user -- in a
+' column they can keep, rather than a popup they have to dismiss.
+'
+' Off by default, so nothing changes for anyone who has not asked for it.
+' Always turn it back on in the same procedure that turned it off.
+
+
+Public Sub AtSetQuiet(quiet As Boolean)
+    AtQuietMode = quiet
+End Sub
+
+
+' Why the last request failed, in the same words the dialog would have used.
+' Blank after a request that worked.
+Public Function AtLastMessage() As String
+    AtLastMessage = AtHttpMessage
+End Function
+
+
+' Your API key, from wherever you have put it.
+'
+' There are two places, because a ready-made workbook cannot be given a key the
+' way the modules can. Your download has your key written into the
+' AutoTraderConfig module before you ever see it; a workbook you were handed by
+' someone else, or downloaded from our site, has no way to carry one.
+'
+'   a Configuration sheet   the cell beside "API key"
+'   AutoTraderConfig        AT_API_KEY
+'
+' A key on the sheet wins, because typing it there is a deliberate act. Leave
+' that cell empty -- or use a workbook with no Configuration sheet at all, as
+' every workbook did until now -- and the module's key is used exactly as
+' before.
+Public Function AtApiKey() As String
+
+    Dim fromSheet As String
+
+    fromSheet = Trim(AtConfigCell("API key"))
+
+    If Len(fromSheet) > 0 And fromSheet <> "<API_KEY>" Then
+        AtApiKey = fromSheet
+    Else
+        AtApiKey = AT_API_KEY
+    End If
+
+End Function
+
+
+' Reads a value from a Configuration sheet, if this workbook has one.
+' Returns blank when it does not, so nothing depends on the sheet existing.
+Private Function AtConfigCell(settingName As String) As String
+
+    Dim sheet As Worksheet
+    Dim r As Long
+    Dim lastRow As Long
+
+    On Error Resume Next
+    Set sheet = ThisWorkbook.Worksheets("Configuration")
+    On Error GoTo 0
+
+    If sheet Is Nothing Then Exit Function
+
+    lastRow = sheet.Cells(sheet.Rows.Count, 1).End(xlUp).Row
+
+    For r = 1 To lastRow
+        If UCase(Trim(CStr(sheet.Cells(r, 1).Value))) = UCase(settingName) Then
+            AtConfigCell = CStr(sheet.Cells(r, 2).Value)
+            Exit Function
+        End If
+    Next r
+
+End Function
+
+
 ' Says plainly when the key has not been filled in. Without this the first
 ' symptom is an order that does not appear, and the reason for it is a
 ' rejection nobody sees.
 Public Function IsAutoTraderReady() As Boolean
 
-    If AT_API_KEY = "<API_KEY>" Or Len(Trim(AT_API_KEY)) = 0 Then
-        MsgBox "No API key. Open the AutoTraderConfig module and set AT_API_KEY " & _
-            "to the key from your AutoTrader Web account settings.", vbCritical, "AutoTrader"
+    If AtApiKey() = "<API_KEY>" Or Len(Trim(AtApiKey())) = 0 Then
+        MsgBox "No API key." & vbCrLf & vbCrLf & _
+            "Put it in the cell beside ""API key"" on the Configuration sheet, " & _
+            "or set AT_API_KEY in the AutoTraderConfig module." & vbCrLf & vbCrLf & _
+            "Your key is in your AutoTrader Web account settings.", _
+            vbCritical, "AutoTrader"
         IsAutoTraderReady = False
         Exit Function
     End If
@@ -427,7 +512,7 @@ Private Sub AtRecordStatus(Status As String, Response As String, IsCommand As Bo
 
     ElseIf Status = AT_HTTP_AUTH Then
         AtHttpAction = AT_ACTION_USER
-        AtHttpMessage = "API key was not accepted. Check AT_API_KEY in the AutoTraderConfig module."
+        AtHttpMessage = "API key was not accepted. Check the Configuration sheet, or AT_API_KEY in the AutoTraderConfig module."
 
     ElseIf Status = AT_HTTP_UNREACHABLE Then
         If IsCommand Then
@@ -485,7 +570,7 @@ Private Sub AtFetchDataset(pseudoAccount As String, dataset As String)
 
     AtEnsureCache
 
-    PostBody = "api-key=" & AtUrlEncode(AT_API_KEY) & _
+    PostBody = "api-key=" & AtUrlEncode(AtApiKey()) & _
         "&pseudoAccount=" & AtUrlEncode(pseudoAccount)
 
     AtTrace "reading " & dataset & " for " & pseudoAccount
@@ -882,7 +967,7 @@ Private Function AtSendCommand(csv As String) As String
 
     Dim PostBody As String
 
-    PostBody = "api-key=" & AtUrlEncode(AT_API_KEY) & "&command=" & AtUrlEncode(csv)
+    PostBody = "api-key=" & AtUrlEncode(AtApiKey()) & "&command=" & AtUrlEncode(csv)
 
     AtTrace "command: " & csv
 
@@ -916,12 +1001,16 @@ Private Function AtRunCommand(csv As String, Description As String) As Boolean
         ' The request reached the broker and was never confirmed. Reporting
         ' False is right -- we did not see it succeed -- but a bare False would
         ' let a sheet quietly assume nothing happened, and something may have.
-        MsgBox Description & " may still have gone through." & vbNewLine & vbNewLine & _
-            AtHttpMessage & vbNewLine & vbNewLine & _
-            "Check your order book before repeating it.", vbExclamation, "AutoTrader"
+        If Not AtQuietMode Then
+            MsgBox Description & " may still have gone through." & vbNewLine & vbNewLine & _
+                AtHttpMessage & vbNewLine & vbNewLine & _
+                "Check your order book before repeating it.", vbExclamation, "AutoTrader"
+        End If
     ElseIf AtHttpAction = AT_ACTION_USER Then
-        MsgBox Description & " failed." & vbNewLine & vbNewLine & AtHttpMessage, _
-            vbCritical, "AutoTrader"
+        If Not AtQuietMode Then
+            MsgBox Description & " failed." & vbNewLine & vbNewLine & AtHttpMessage, _
+                vbCritical, "AutoTrader"
+        End If
     End If
 
 End Function
@@ -1006,16 +1095,20 @@ Public Function PlaceOrderAdvanced(Variety As String, _
     If AtHttpAction = AT_ACTION_CHECK Then
         PlaceOrderAdvanced = AT_UNCONFIRMED
 
-        MsgBox "Order was sent but the broker did not confirm it." & vbNewLine & vbNewLine & _
-            AtHttpMessage & vbNewLine & vbNewLine & _
-            "Do not place it again. Check your order book first.", vbExclamation, "AutoTrader"
+        If Not AtQuietMode Then
+            MsgBox "Order was sent but the broker did not confirm it." & vbNewLine & vbNewLine & _
+                AtHttpMessage & vbNewLine & vbNewLine & _
+                "Do not place it again. Check your order book first.", vbExclamation, "AutoTrader"
+        End If
         Exit Function
     End If
 
     Debug.Print "AutoTrader: SD-ERR-XL-PLACE: order placement failed [" & Status & "] " & AtHttpMessage
 
-    MsgBox "Order was not placed." & vbNewLine & vbNewLine & AtHttpMessage, _
-        vbCritical, "AutoTrader"
+    If Not AtQuietMode Then
+        MsgBox "Order was not placed." & vbNewLine & vbNewLine & AtHttpMessage, _
+            vbCritical, "AutoTrader"
+    End If
 
 End Function
 

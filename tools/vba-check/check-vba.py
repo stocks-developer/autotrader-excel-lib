@@ -16,6 +16,9 @@ Checks:
   3. Unbalanced If/End If, For/Next, Do/Loop, With/End With, Select/End Select.
   4. Calls to helpers that are not defined anywhere in the module set.
   5. Variables assigned but never declared, in modules that set Option Explicit.
+  6. Module-level declarations placed after a procedure. VBA keeps them in a
+     section at the top; one further down stops the module compiling, and the
+     error a caller then sees names an innocent function as "not defined".
 
 Run from the repository root:
 
@@ -295,6 +298,46 @@ for path in FILES:
     if proc_name:
         flush(proc_name, declared, body, start)
 
+# Check 6. Module-level declarations must come BEFORE every procedure.
+#
+# VBA keeps all module-level variables and constants in a declarations section
+# at the top of the module. One placed between procedures does not merely warn
+# -- the module fails to compile, so EVERY function in it disappears, and the
+# error a caller sees is "Sub or Function not defined" pointing at something
+# entirely innocent.
+#
+# This shipped: a `Private AtQuietMode As Boolean` added next to the comment
+# that explained it, 30 lines below the first procedure. Checks 1 to 5 all
+# passed, because nothing was duplicated, unclosed, unbalanced or undefined.
+# Only real VBA objected, and only once someone tried to run it.
+MODULE_DECL = re.compile(
+    r"^\s*(?:Public|Private|Global|Dim)\s+(?!Function\b|Sub\b|Property\b|Declare\b|Type\b|Enum\b)\w+",
+    re.I,
+)
+
+for path in FILES:
+    if not path.exists():
+        continue
+    seen_proc = False
+    in_proc = False
+    for no, raw in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+        bare = strip_comment(raw)
+        if PROC.match(bare):
+            seen_proc = True
+            in_proc = True
+            continue
+        if END_PROC.match(bare):
+            in_proc = False
+            continue
+        if in_proc or not seen_proc:
+            continue
+        if MODULE_DECL.match(bare):
+            failures.append(
+                f"{path.name}:{no}: module-level declaration after a procedure "
+                f"-- VBA needs it above the first one, or the module will not compile: "
+                f"{bare.strip()}"
+            )
+
 print(f"Procedures found: {len(all_procs)}")
 print(f"Files checked:    {len([p for p in FILES if p.exists()])}")
 print()
@@ -306,5 +349,5 @@ if failures:
     sys.exit(1)
 
 print("PASS -- no duplicates, no unclosed procedures, no unbalanced blocks,")
-print("        no calls to undefined helpers.")
+print("        no calls to undefined helpers, no declaration below a procedure.")
 sys.exit(0)
