@@ -37,7 +37,12 @@ except ImportError:
     sys.exit(2)
 
 REPO = Path(__file__).resolve().parents[2]
-BOOK = REPO / "clients/excel/current/samples/AutoTraderWeb-OrderPad.xlsm"
+
+# With no argument this checks the workbook that SHIPS. Pass a path to check a
+# freshly built one BEFORE it replaces that -- which is how you confirm a
+# rebuild reproduced what is already released.
+BOOK = (Path(sys.argv[1]) if len(sys.argv) > 1
+        else REPO / "clients/excel/current/samples/AutoTraderWeb-OrderPad.xlsm")
 
 # module name inside the workbook -> the file in this repository it must match
 SOURCES = {
@@ -92,7 +97,10 @@ def main():
         embedded[name.replace(".bas", "").replace(".cls", "")] = code
     parser.close()
 
-    print("%s" % BOOK.relative_to(REPO))
+    try:
+        print("%s" % BOOK.relative_to(REPO))
+    except ValueError:
+        print("%s" % BOOK)
     print()
 
     for name, src in SOURCES.items():

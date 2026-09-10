@@ -19,6 +19,10 @@ Checks:
   6. Module-level declarations placed after a procedure. VBA keeps them in a
      section at the top; one further down stops the module compiling, and the
      error a caller then sees names an innocent function as "not defined".
+  7. Characters outside ASCII. VBA stores modules in a code page rather than
+     UTF-8, so anything above ASCII does not survive an import: it arrives as
+     question marks, and the module in the workbook is then no longer the
+     module in this repository.
 
 Run from the repository root:
 
@@ -49,6 +53,20 @@ DECL = re.compile(r"^\s*(?:Public|Private)\s+(?:Const\s+)?(\w+)", re.I)
 
 failures = []
 
+def check_ascii(path, text):
+    """Check 7 -- see the module docstring."""
+    odd = {}
+    for number, line in enumerate(text.splitlines(), 1):
+        for ch in line:
+            if ord(ch) > 127:
+                odd.setdefault(ord(ch), number)
+    for code, number in sorted(odd.items()):
+        failures.append(
+            "%s line %d: character U+%04X is outside ASCII. VBA modules are "
+            "stored in a code page, so it will not survive an import."
+            % (path.name, number, code))
+
+
 
 def strip_comment(line):
     """Remove a trailing VBA comment, honouring quoted strings."""
@@ -72,6 +90,7 @@ for path in FILES:
         continue
 
     text = path.read_text(encoding="utf-8", errors="replace")
+    check_ascii(path, text)
     lines = text.splitlines()
 
     # Join VBA line continuations so a multi-line signature reads as one line.

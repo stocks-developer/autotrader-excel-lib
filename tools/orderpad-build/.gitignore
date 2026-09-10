@@ -1,0 +1,4 @@
+# Build artefacts: the intermediate .xlsx, the header notes it writes for the
+# button step, and any screenshot. Only the finished .xlsm in
+# clients/excel/current/samples/ is committed and shipped.
+build/
