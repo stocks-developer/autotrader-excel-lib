@@ -1,6 +1,6 @@
 # AutoTrader Web Excel Tools: Bulk Multi-Account Order Placement for 40+ Indian Brokers
 
-> Place and copy **bulk orders from a spreadsheet** into one account or many at once, across **40+ Indian brokers**, straight from **Excel**. Includes ready-made bulk-order tools and VBA modules that expose the full trading API. Part of **[AutoTrader Web](https://stocksdeveloper.in/)** by **Stocks Developer**.
+> Place and copy **bulk orders from a spreadsheet** into one account or many at once, across **40+ Indian brokers**, straight from **Excel**. Includes the ready-made Order Pad and VBA modules that expose the full trading API. Part of **[AutoTrader Web](https://stocksdeveloper.in/)** by **Stocks Developer**.
 
 [![Brokers supported](https://img.shields.io/badge/brokers-40%2B-2ea44f)](https://stocksdeveloper.in/#supported-brokers)
 [![Free trial](https://img.shields.io/badge/free%20trial-1%20month-blue)](https://webx.stocksdeveloper.in/register)
@@ -11,7 +11,7 @@
 
 ## What is this?
 
-The **AutoTrader Web Excel tools** let you place orders into one or many broker accounts straight from a spreadsheet. There are ready-made bulk-order tools for copying and placing orders across accounts, and a set of **VBA modules** that expose the full AutoTrader Web trading API for anyone who codes strategies in Excel macros.
+The **AutoTrader Web Excel tools** let you place orders into one or many broker accounts straight from a spreadsheet. There is a ready-made workbook, the **Order Pad**, for placing orders across accounts and seeing what happened to each one, and a set of **VBA modules** that expose the full AutoTrader Web trading API for anyone who codes strategies in Excel macros.
 
 - **Bulk orders from a spreadsheet.** Enter orders in a sheet and send them all at once.
 - **Multi-account and multi-broker.** Copy one order across many accounts (with per-account quantity), or place a different order per account, across different brokers.
@@ -53,16 +53,26 @@ AutoTrader Web works with **40+ Indian brokers**:
 
 Excel talks to AutoTrader Web directly.
 
-### Use a ready-made bulk-order tool
+### Use the Order Pad
 
-These already contain everything they need. You only add your API key.
+A ready-made workbook that places orders into one account or many, and writes back what happened to each one: the broker's order id, its status and its reason.
 
-1. Download a tool from the [`clients/excel/current/samples`](clients/excel/current/samples) folder.
+There is nothing to import. Every module it needs is already inside the workbook.
+
+1. Download [`AutoTraderWeb-OrderPad.xlsm`](clients/excel/current/samples/AutoTraderWeb-OrderPad.xlsm) from the [`clients/excel/current/samples`](clients/excel/current/samples) folder.
 2. Open it and clear the Excel warnings (Enable Editing, Enable Content, and Unblock the file).
-3. Press **Alt+F11**, open the **AutoTraderConfig** module, and replace `<API_KEY>` with your API key. Save.
-4. Enter your orders and accounts in the sheets, then press the button to place them.
+3. Put your API key in the **Value** column on the **Configuration** sheet.
+4. List your pseudo accounts on the **Accounts** sheet and put `Y` beside each one you want to trade.
+5. Press **Check accounts**. It reads each account's free margin and places nothing, so a wrong account name is caught before you send fifty orders rather than after.
+6. Type your orders on the **Orders** sheet and press **Place orders**. Every order lands on the **Results** sheet with its id, status and reason.
 
-Get your API key from your [account settings](https://webx.stocksdeveloper.in/). Treat it like a password: anyone who has it can place orders in your accounts, so do not share a workbook that still has your key in it.
+The buttons sit along the top of the Orders, Accounts and Results sheets and stay in place as you scroll. Hover any column heading for a note on what goes in it.
+
+Leave the **Account** column blank on an order row and that order goes to every account you ticked. How much each one gets is set by **Allocation mode** on the Configuration sheet: `SAME`, `PER ACCOUNT` or `SPLIT`.
+
+**Place at** on the same sheet arms a timer, and the Cancel timer button counts down while it is armed.
+
+Your API key is in AutoTrader Web under **Settings -> Security**. It is hidden, so click **Reveal**, type your AutoTrader password, then **Copy**. Treat it like a password: anyone who has it can place orders in your accounts, so do not share a workbook that still has your key in it.
 
 ### Write your own workbook
 
@@ -73,7 +83,7 @@ Get your API key from your [account settings](https://webx.stocksdeveloper.in/).
 
 > The modules also live in [`direct/`](direct) in this repository, but the copy you download from your account is the one that already carries your API key.
 
-The included bulk-order tools let you copy many orders across many accounts, copy a single order across accounts with different quantities per account, place a different order per account across brokers, and schedule orders to go at a set time.
+The Order Pad covers all of this from one grid: many orders across many accounts, one order copied across accounts with a different quantity or weight for each, a different order per account across brokers, and placement at a set time with the **Arm timer** button.
 
 Full step-by-step guide: **[Excel tools setup](https://stocksdeveloper.in/documentation/client-setup/excel-library/)** and [bulk orders from Excel](https://stocksdeveloper.in/documentation/excel/). Get your API key from your [account settings](https://webx.stocksdeveloper.in/register).
 
@@ -124,10 +134,11 @@ So a read taken immediately after a change can show the previous state. That is 
 
 | Path | What it is |
 |---|---|
-| [`direct/`](direct) | The three modules a user imports. **Everything in this folder is sent to users verbatim.** |
-| [`clients/excel/current/samples/`](clients/excel/current/samples) | The ready-made bulk-order workbooks. |
-| `clients/excel/current/samples/modules/` | The driver source inside each of those workbooks, one file per workbook. |
+| [`direct/`](direct) | The three modules. **Everything in this folder is sent to users verbatim.** |
+| [`clients/excel/current/samples/`](clients/excel/current/samples) | The ready-made Order Pad workbook. |
+| `clients/excel/current/samples/modules/` | Source of the Order Pad's own module, kept here so it can be read and diffed. |
 | `clients/excel/current/addin/modules/` | Source of the retired add-in, kept for reference only. Nothing here is used or shipped. |
+| [`tools/orderpad-check/`](tools/orderpad-check) | Checks the Order Pad workbook still matches the modules in this repository. |
 
 > **Do not add files to [`direct/`](direct).** The download on **Tools -> Library** is built by taking that whole folder from this repository at the moment a user asks for it, so anything placed there arrives in their zip. The setup instructions tell them to import three `.bas` files, and a fourth one would collide with a module of the same name and stop the workbook compiling. Source that is not meant for users belongs beside the thing it builds, which is why the sample drivers sit under `samples/modules/`.
 
