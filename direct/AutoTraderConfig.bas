@@ -38,17 +38,25 @@ Public Const AT_BASE_URL As String = "https://apix.stocksdeveloper.in"
 ' is answered from the copy held in memory, so a recalculation costs one
 ' request per dataset instead of twenty.
 '
-' Lowering these does NOT get you fresher data. The server allows roughly one
-' portfolio request per second per account and answers anything faster than
-' that from its own copy, so a smaller number here buys extra requests and the
-' same numbers. Raise them if you trade slowly and want less traffic.
+' Every request counts toward your API limit. Portfolio reads by this module
+' have their own allowance of about one request per second per account,
+' averaged over five minutes. These defaults use at most about three quarters
+' of it. Each workbook that uses this module keeps its own copy.
+'
+' Lowering these does NOT get you fresher data. The server refreshes each
+' dataset from your broker about once a second at most and answers anything
+' faster from its own copy, so a smaller number here buys extra requests and
+' the same numbers. Raise them if you trade slowly and want less traffic.
+'
+' Positions are refreshed less often than orders, because a strategy usually
+' needs to see an order fill quickly.
 '
 ' Holdings barely move during the day, which is why they are refreshed rarely.
 ' *****************************************************************************
 
 Public Const AT_TTL_ORDERS As Long = 2
 
-Public Const AT_TTL_POSITIONS As Long = 2
+Public Const AT_TTL_POSITIONS As Long = 5
 
 Public Const AT_TTL_MARGINS As Long = 30
 
