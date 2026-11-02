@@ -83,6 +83,16 @@ powershell -File tools/orderpad-build/check-vbom.ps1
 
 ## Things that will bite
 
+- **Scripting a workbook that is open in another Excel silently loses the save.**
+  The second instance opens it read-only, `wb.Save()` raises nothing with
+  `DisplayAlerts = False`, and the in-memory value still reads back as changed.
+  Check `wb.ReadOnly` first, and verify the file on disk afterwards.
+
+- **The timer does not fire while a cell is being edited.** `Application.OnTime`
+  waits for Excel to leave edit mode: measured 2026-11-01, 35 s past the time
+  with nothing sent, then the orders went within a second of leaving the cell.
+  Neither the Help sheet nor the setup guide says so yet.
+
 - **`FIRST_DATA_ROW` in the `.bas` must equal `HEADER_ROW` + 1.** Row 1 is the
   frozen button band and the headings sit on row 2, so the first order is row 3.
   The value is declared in three places — the `.bas`, `build-orderpad.py` and
