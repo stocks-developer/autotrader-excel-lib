@@ -59,7 +59,7 @@ so a freshly built one can be checked *before* it replaces that. (`check-vba.py`
 takes no argument: it reads `direct/*.bas` rather than the workbook.)
 
 ```
-powershell -File tools/orderpad-build/make-xlsm.ps1 -Xlsm C:ull\path	o	ools\orderpad-builduild\candidate.xlsm
+powershell -File tools/orderpad-build/make-xlsm.ps1 -Xlsm C:/full/path/to/autotrader-excel-lib/tools/orderpad-build/build/candidate.xlsm
 python tools/orderpad-check/check-workbook.py tools/orderpad-build/build/candidate.xlsm
 ```
 

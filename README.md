@@ -76,7 +76,7 @@ Your API key is in AutoTrader Web under **Settings -> Security**. It is hidden, 
 
 ### Write your own workbook
 
-1. Sign in at [webx.stocksdeveloper.in](https://webx.stocksdeveloper.in/) and go to **Tools -> Library**.
+1. Sign in at [webx.stocksdeveloper.in](https://webx.stocksdeveloper.in/) and go to **Tools -> Client Libraries**.
 2. Download the Excel modules. Your API key is already inside the download, which is why it asks for your password.
 3. Open your workbook, press **Alt+F11**, then **File -> Import File** and import all three `.bas` files.
 4. Save the workbook as a macro-enabled workbook (`.xlsm`).
@@ -140,7 +140,7 @@ So a read taken immediately after a change can show the previous state. That is 
 | `clients/excel/current/addin/modules/` | Source of the retired add-in, kept for reference only. Nothing here is used or shipped. |
 | [`tools/orderpad-check/`](tools/orderpad-check) | Checks the Order Pad workbook still matches the modules in this repository. |
 
-> **Do not add files to [`direct/`](direct).** The download on **Tools -> Library** is built by taking that whole folder from this repository at the moment a user asks for it, so anything placed there arrives in their zip. The setup instructions tell them to import three `.bas` files, and a fourth one would collide with a module of the same name and stop the workbook compiling. Source that is not meant for users belongs beside the thing it builds, which is why the sample drivers sit under `samples/modules/`.
+> **Do not add files to [`direct/`](direct).** The download on **Tools -> Client Libraries** is built by taking that whole folder from this repository at the moment a user asks for it, so anything placed there arrives in their zip. The setup instructions tell them to import three `.bas` files, and a fourth one would collide with a module of the same name and stop the workbook compiling. Source that is not meant for users belongs beside the thing it builds, which is why the sample drivers sit under `samples/modules/`.
 
 ## Pricing and free trial
 
