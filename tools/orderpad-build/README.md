@@ -59,7 +59,7 @@ so a freshly built one can be checked *before* it replaces that. (`check-vba.py`
 takes no argument: it reads `direct/*.bas` rather than the workbook.)
 
 ```
-powershell -File tools/orderpad-build/make-xlsm.ps1 -Xlsm tools/orderpad-build/build/candidate.xlsm
+powershell -File tools/orderpad-build/make-xlsm.ps1 -Xlsm C:ull\path	o	ools\orderpad-builduild\candidate.xlsm
 python tools/orderpad-check/check-workbook.py tools/orderpad-build/build/candidate.xlsm
 ```
 
@@ -82,6 +82,9 @@ powershell -File tools/orderpad-build/check-vbom.ps1
 ```
 
 ## Things that will bite
+
+- **`-Xlsm` needs a full path.** Excel resolves a relative one against its own
+  folder, not this repository, and the save fails with "cannot access the file".
 
 - **Scripting a workbook that is open in another Excel silently loses the save.**
   The second instance opens it read-only, `wb.Save()` raises nothing with
