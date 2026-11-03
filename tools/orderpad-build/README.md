@@ -59,7 +59,7 @@ so a freshly built one can be checked *before* it replaces that. (`check-vba.py`
 takes no argument: it reads `direct/*.bas` rather than the workbook.)
 
 ```
-powershell -File tools/orderpad-build/make-xlsm.ps1 -Xlsm C:/full/path/to/autotrader-excel-lib/tools/orderpad-build/build/candidate.xlsm
+powershell -File tools/orderpad-build/make-xlsm.ps1 -Xlsm C:\full\path\to\autotrader-excel-lib\tools\orderpad-build\build\candidate.xlsm
 python tools/orderpad-check/check-workbook.py tools/orderpad-build/build/candidate.xlsm
 ```
 
@@ -83,8 +83,11 @@ powershell -File tools/orderpad-build/check-vbom.ps1
 
 ## Things that will bite
 
-- **`-Xlsm` needs a full path.** Excel resolves a relative one against its own
-  folder, not this repository, and the save fails with "cannot access the file".
+- **`-Xlsm` needs a full path with backslashes.** Excel resolves a relative one
+  against its own folder, not this repository, and forward slashes also fail:
+  either way the save fails with "cannot access the file" and a hidden Excel
+  (`/automation -Embedding`) is left holding `build/`. Check its command line and
+  start time, then stop it before retrying.
 
 - **Scripting a workbook that is open in another Excel silently loses the save.**
   The second instance opens it read-only, `wb.Save()` raises nothing with
@@ -94,7 +97,7 @@ powershell -File tools/orderpad-build/check-vbom.ps1
 - **The timer does not fire while a cell is being edited.** `Application.OnTime`
   waits for Excel to leave edit mode: measured 2026-11-01, 35 s past the time
   with nothing sent, then the orders went within a second of leaving the cell.
-  Neither the Help sheet nor the setup guide says so yet.
+  The Help sheet and the setup guide both say so.
 
 - **`FIRST_DATA_ROW` in the `.bas` must equal `HEADER_ROW` + 1.** Row 1 is the
   frozen button band and the headings sit on row 2, so the first order is row 3.

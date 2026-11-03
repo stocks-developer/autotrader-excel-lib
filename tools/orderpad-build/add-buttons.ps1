@@ -99,12 +99,18 @@ try {
                 if ($null -ne $cell.Comment) { $cell.Comment.Delete() }
                 $c = $cell.AddComment($notes.$sheetName.$col)
                 $c.Shape.TextFrame.AutoSize = $true
-                # AutoSize can produce one very long line; cap the width and let
-                # it wrap, then let AutoSize settle the height.
+                # AutoSize makes one very long line, and turning it back on after
+                # setting a width undoes the width. So cap the width with AutoSize
+                # off and work the height out from the text. 46 characters a line
+                # is deliberately low: a spare line beats a cut-off sentence.
                 if ($c.Shape.Width -gt 260) {
                     $c.Shape.TextFrame.AutoSize = $false
                     $c.Shape.Width = 260
-                    $c.Shape.TextFrame.AutoSize = $true
+                    $lines = 0
+                    foreach ($part in ($notes.$sheetName.$col -split "`n")) {
+                        $lines += [Math]::Max(1, [Math]::Ceiling($part.Length / 46))
+                    }
+                    $c.Shape.Height = 13 * $lines + 6
                 }
                 $c.Shape.Top = $belowSplit
                 $c.Visible = $false

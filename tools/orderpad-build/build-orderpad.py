@@ -117,7 +117,8 @@ ACCOUNTS = [
     ("Include", 10, "Y to trade this account, N to skip it."),
     ("Quantity", 12, "Used only when Allocation mode is PER ACCOUNT."),
     ("Weight", 10, "Used only when Allocation mode is SPLIT. A share, not a "
-                   "percentage: 2 and 1 means twice as much to the first."),
+                   "percentage: 2 and 1 means twice as much to the first.\n"
+                   "For futures and options, make each share a whole number of lots."),
 ]
 
 RESULTS = [
@@ -147,8 +148,8 @@ EXAMPLE_ORDERS = [
     "Exchange  Symbol                      Side  Qty  Type    Price   Product",
     "NSE       SBIN                        BUY   1    MARKET  0       INTRADAY",
     "NSE       INFY                        SELL  5    LIMIT   1450.5  DELIVERY",
-    "NSE       NIFTY_25-SEP-2026_CE_24000  BUY   75   MARKET  0       NORMAL",
-    "MCX       CRUDEOIL_19-SEP-2026_FUT    BUY   1    LIMIT   5210    NORMAL",
+    "NSE       NIFTY_29-JUN-2027_CE_24000  BUY   65   MARKET  0       NORMAL",
+    "MCX       CRUDEOIL_19-APR-2027_FUT    BUY   1    LIMIT   5210    NORMAL",
 ]
 
 # --- the Help sheet, as content rather than as formatting --------------------
@@ -191,7 +192,10 @@ HELP = [
                                    "on the Orders sheet."),
     ("row", "OrderPadRefresh", "Re-reads Results from your broker's order book."),
     ("row", "OrderPadArmTimer", "Places automatically at the time on the "
-                                "Configuration sheet."),
+                                "Configuration sheet. The timer cannot fire while "
+                                "a cell is being edited: if you are still typing "
+                                "in a cell when the time arrives, your orders go "
+                                "out as soon as you leave that cell."),
     ("row", "OrderPadCancelTimer", "Cancels a timer you armed."),
     ("row", "OrderPadClearResults", "Empties the Results sheet. This clears the "
                                     "sheet only. It cancels nothing at your broker."),
@@ -210,6 +214,11 @@ HELP = [
     ("row", "SPLIT", "The order quantity is shared out across accounts in "
                      "proportion to Weight. Rounding leftovers go to the first "
                      "account, so the pieces always add back up to what you asked for."),
+    ("body", "SPLIT does not know lot sizes. It shares out single units, so a "
+             "futures or options order can come out in pieces that are not whole "
+             "lots, and your broker will refuse those. With a lot of 65, 130 at "
+             "weights 2, 1, 1 becomes 66, 32 and 32. Pick a quantity and weights "
+             "that divide into whole lots: 260 at 2, 1, 1 becomes 130, 65 and 65."),
     ("blank",),
 
     ("section", "Example orders"),
