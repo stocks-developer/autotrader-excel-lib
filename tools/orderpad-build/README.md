@@ -71,6 +71,10 @@ does not render Form controls, so a PDF shows the workbook with none of them.
 powershell -File tools/orderpad-build/shot-excel.ps1 -Sheet Orders
 ```
 
+Its window is short, so it shows only the top rows, and a note can run off the
+edge. To read the whole Help sheet, export that sheet to PDF instead:
+`ExportAsFixedFormat` misses only the buttons, and Help has none.
+
 `check-vbom.ps1` reports whether *Trust access to the VBA project object model*
 is currently on, and changes nothing. Step 3 turns that setting on, uses it and
 puts it back — but a script that restores a setting and reports success can be
