@@ -173,8 +173,9 @@ HELP = [
     ("step", "6", "Read the Results sheet. Every order is there with its id, "
                   "its status and its reason."),
     ("note", "The buttons for these sit along the top of the Orders, Accounts "
-             "and Results sheets, and stay put as you scroll. You can also run "
-             "any of them by pressing Alt+F8 and picking the name."),
+             "and Results sheets, and stay put as you scroll. Each one also has "
+             "a keyboard shortcut, listed below, and you can run any of them by "
+             "pressing Alt+F8 and picking the name."),
     ("blank",),
 
     ("section", "The sheets"),
@@ -199,6 +200,23 @@ HELP = [
     ("row", "OrderPadCancelTimer", "Cancels a timer you armed."),
     ("row", "OrderPadClearResults", "Empties the Results sheet. This clears the "
                                     "sheet only. It cancels nothing at your broker."),
+    ("blank",),
+
+    # The keys themselves live in AutoTraderOrderPad.bas, as a VB_Invoke_Func
+    # attribute under each Sub. Change one there and change it here too.
+    ("section", "Keyboard shortcuts"),
+    ("body", "Every button can be run from the keyboard. Hold Ctrl and Shift "
+             "together and press the letter. They work from any sheet in this "
+             "workbook."),
+    ("row", "Ctrl + Shift + A", "Check accounts (OrderPadCheckAccounts)"),
+    ("row", "Ctrl + Shift + P", "Place orders (OrderPadPlaceOrders). It still "
+                                "asks you to confirm before anything is sent."),
+    ("row", "Ctrl + Shift + T", "Arm timer, to start placing at your set time "
+                                "(OrderPadArmTimer)"),
+    ("row", "Ctrl + Shift + S", "Cancel timer, to stop it (OrderPadCancelTimer)"),
+    ("row", "Ctrl + Shift + R", "Refresh results (OrderPadRefresh)"),
+    ("row", "Ctrl + Shift + C", "Clear results (OrderPadClearResults). It asks "
+                                "you to confirm first."),
     ("blank",),
 
     ("section", "Sending one order to many accounts"),

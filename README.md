@@ -83,7 +83,7 @@ Your API key is in AutoTrader Web under **Settings -> Security**. It is hidden, 
 
 > The modules also live in [`direct/`](direct) in this repository, but the copy you download from your account is the one that already carries your API key.
 
-The Order Pad covers all of this from one grid: many orders across many accounts, one order copied across accounts with a different quantity or weight for each, a different order per account across brokers, and placement at a set time with the **Arm timer** button.
+The Order Pad covers all of this from one grid: many orders across many accounts, one order copied across accounts with a different quantity or weight for each, a different order per account across brokers, and placement at a set time with the **Arm timer** button. Every button also has a keyboard shortcut (hold Ctrl and Shift and press A, P, T, S, R or C), listed on the workbook's Help sheet.
 
 Full step-by-step guide: **[Excel tools setup](https://stocksdeveloper.in/documentation/client-setup/excel-library/)** and [bulk orders from Excel](https://stocksdeveloper.in/documentation/excel/). Get your API key from your [account settings](https://webx.stocksdeveloper.in/register).
 

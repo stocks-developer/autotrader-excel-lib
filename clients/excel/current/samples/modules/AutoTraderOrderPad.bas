@@ -30,6 +30,17 @@ Attribute VB_Name = "AutoTraderOrderPad"
 '                     up, so a status read straight after placing is often
 '                     still the old one. Press this again a few seconds later.
 '   Arm timer         places automatically at the time on Configuration.
+'   Cancel timer      cancels an armed timer.
+'   Clear results     empties the Results sheet.
+'
+' KEYBOARD SHORTCUTS
+'
+'   Every button also runs from Ctrl+Shift+letter, set by the
+'   VB_Invoke_Func attribute under each Sub ("P\n14" = Ctrl+Shift+P):
+'   A Check accounts, P Place orders, T Arm timer, S Cancel timer,
+'   R Refresh results, C Clear results. Asked for by a customer who
+'   finds the mouse hard to use. Change a key here and in the Help
+'   sheet text in tools/orderpad-build/build-orderpad.py together.
 '
 ' Macro names are prefixed OrderPad* so they cannot collide with the
 ' AutoTraderClientDirect module, which also defines PlaceOrders.
@@ -98,6 +109,7 @@ Private lastFailureReason As String
 ' Check accounts -- reads only, places nothing.
 ' =============================================================================
 Public Sub OrderPadCheckAccounts()
+Attribute OrderPadCheckAccounts.VB_ProcData.VB_Invoke_Func = "A\n14"
 
     Dim accounts As Variant
     Dim quantities As Variant
@@ -142,6 +154,7 @@ End Sub
 ' Place every order on the Orders sheet.
 ' =============================================================================
 Public Sub OrderPadPlaceOrders()
+Attribute OrderPadPlaceOrders.VB_ProcData.VB_Invoke_Func = "P\n14"
 
     Dim orders As Worksheet
     Dim accounts As Variant
@@ -221,6 +234,7 @@ End Sub
 ' Re-read the status of everything already in Results.
 ' =============================================================================
 Public Sub OrderPadRefresh()
+Attribute OrderPadRefresh.VB_ProcData.VB_Invoke_Func = "R\n14"
 
     If Not Ready(False, False) Then Exit Sub
 
@@ -267,6 +281,7 @@ End Sub
 ' Timer
 ' =============================================================================
 Public Sub OrderPadArmTimer()
+Attribute OrderPadArmTimer.VB_ProcData.VB_Invoke_Func = "T\n14"
 
     If Not Ready(True, True) Then Exit Sub
 
@@ -299,6 +314,7 @@ End Sub
 
 
 Public Sub OrderPadCancelTimer()
+Attribute OrderPadCancelTimer.VB_ProcData.VB_Invoke_Func = "S\n14"
 
     If Not timerArmed Then
         MsgBox "The timer is not armed.", vbInformation, "Nothing to cancel"
@@ -348,6 +364,7 @@ End Sub
 ' Clear the Results sheet.
 ' =============================================================================
 Public Sub OrderPadClearResults()
+Attribute OrderPadClearResults.VB_ProcData.VB_Invoke_Func = "C\n14"
 
     Dim results As Worksheet
     Dim lastRow As Long
